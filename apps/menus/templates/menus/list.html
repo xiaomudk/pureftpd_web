@@ -1,0 +1,314 @@
+{{extend "base.html"}}
+{{block javascript}}
+<script type="text/javascript">
+    function get_data(action, id) {
+        $('#cc').combobox({
+            url: '/menus/get_parent',
+            valueField: 'id',
+            textField: 'catname',
+            //当数据加载成功，默认选择value为0的选项
+            onLoadSuccess: function () {
+                $('#cc').combobox('select', '0');
+                if (action == 'edit') {
+                    getjson(id);
+                }
+            },
+
+            onSelect: function (record) {
+//                alert(JSON.stringify(record));
+                //当选择父菜单为"无"的时候，地址这一栏不允许填写
+                setselect(record)
+
+            },
+        });
+    }
+    function setselect(record) {
+        var id = $('#cc').combobox('getValue');
+        if (id == 0 ) {
+            $('#url').textbox('readonly');
+            $('#url').textbox('setText', '父菜单是没有url的');
+        } else {
+            $('#url').textbox('readonly', false);
+            var url = $('#url').textbox('getValue');
+            $('#url').textbox('setText', url);
+
+        }
+    }
+    //远程获取json数据
+    function getjson(id) {
+        $.getJSON('/menus/getcat_json/' + id, function (data) {
+            $('#ff').form('load', data);
+            //其他操作
+            $('#cc').combobox('select', data.parentid);
+            setselect(data)
+        });
+
+    }
+//$(function() {
+    $(window).load(function() {
+    $('#tt').datagrid({
+        url: '/menus/getlist',
+        method: 'get',
+        idField: 'id',
+        singleSelect: false,
+        nowrap: true,
+        fitColumns: true,
+        //自适应宽度
+        rownumbers: false,
+        //显示行号
+        pagination: false,
+        //是否显示底部分页栏
+        layout: ['first', 'links', 'last'],
+        showPageList: true,
+        remoteSort: false,
+        //是否从服务器排序数据
+        showFooter: true,
+        pageSize: 10,
+        toolbar: '#tt_btn',
+        columns: [[{
+            field: 'ck',
+            checkbox: true
+        },
+            {
+                field: 'id',
+                title: '菜单id',
+                width: 100,
+                sortable: true
+            },
+            {
+                field: 'catname',
+                title: '菜单名称',
+                width: 100,
+                sortable: true
+            },
+            {
+                field: 'parentid',
+                title: '父菜单ID',
+                width: 100,
+                hidden: true
+            },
+            {
+                field: 'parentname',
+                title: '父菜单',
+                width: 100,
+                sortable: true
+            },
+            {
+                field: 'url',
+                title: '菜单url',
+                width: 100,
+                align: 'right',
+                sortable: true
+            },
+            {
+                field: 'isshow',
+                title: '是否显示',
+                width: 100,
+                align: 'right',
+                sortable: true
+            },
+        ]],
+        //如果是父菜单(parentid=0),设置背景色
+        rowStyler: function (index, row) {
+            if (row.parentid == 0) {
+                return 'background-color:#647469;color:#fff;font-weight:bold;';
+            }
+        },
+        loadFilter: function (data) {
+            //获取父菜单名称
+            if (data.rows) {
+                rows = data.rows
+            } else {
+                rows = data
+            }
+            var parent_catname = new Array();
+            for (var i in rows) {
+                if (rows[i].parentid == 0) {
+                    catid = rows[i].id;
+                    parent_catname[catid] = rows[i].catname;
+                }
+            }
+            for (var i in rows) {
+                if (rows[i].parentid == 0) {
+                    rows[i].parentname = '无'
+                } else {
+                    rows[i].parentname = parent_catname[rows[i].parentid]
+                }
+            }
+
+            return data
+        },
+
+        onLoadSuccess: function () {
+            //获取菜单总数
+            rows = $('#tt').datagrid('getRows');
+            count = rows.length;
+            $("#tt_btn_info span").text(count);
+        },
+
+    });
+
+    var $parent = self.parent.$;
+    //根据选择的父菜单，设置url这一栏是否为只读
+
+
+    $("#save").on("click", function () {
+        $('#ff').form(
+            'submit', {
+                url: '/menus/save',
+                onSubmit: function () {
+//                 点击提交时的验证
+                    return $(this).form('enableValidation').form('validate');
+                },
+                onLoadSuccess: function (data) {
+                    alert(data);
+                },
+                success: function (data) {
+                    //json解析成js对象
+                    var data = jQuery.parseJSON(data);
+                    if (data.returncode == "200") {
+//                    $parent.messager.alert("提示",data.message, "info");
+                        $("#dlg").dialog("close");
+                        $.messager.alert("提示", data.message, "info");
+                        $('#tt').datagrid('reload');
+                    } else {
+                        $.messager.alert("错误", data.message, "error");
+
+                    }
+                }
+            });
+    });
+
+
+        $("#cancel").on("click", function () {
+            $("#dlg").dialog("close");
+        });
+
+        //新增
+        $("#add").on("click",
+            function () {
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','新增菜单');
+                $('#ff').form('clear');
+                $('#cc2').combobox('select', '1');
+                get_data('add',0);
+            });
+        //修改
+        $("#update").on("click",
+            function () {
+
+                var rows = $('#tt').datagrid('getSelections');
+                if (rows.length == 1) {
+                    row = rows[0];
+                    $('#dlg').dialog('open').dialog('center').dialog('setTitle','修改菜单');
+                    get_data('edit', row.id);
+                } else {
+                    $.messager.alert("提示", "必须选择一条且只能选择一条", "error")
+
+                }
+            });
+        //删除
+        $("#delete").on("click",
+            function () {
+                var ids = [];
+                var rows = $('#tt').datagrid('getSelections');
+                if (rows.length < 1) {
+                    $.messager.alert("提示", "请选择你要删除的数据", "error")
+                    return
+                }
+                for (var i=0; i<rows.length; i++){
+                    ids.push(rows[i].id)
+                }
+                $.messager.confirm('提醒','你确实这删除这'+ids.length+'条记录吗?', function (r) {
+                    if (r){
+                         $.post('/menus/delete', {
+                             'id[]': ids
+                         }, function (data) {
+                            if (data.returncode == "200") {
+    //                          $parent.messager.alert("提示",data.message, "info");
+                                $.messager.alert("提示", data.message, "info");
+                                $('#tt').datagrid('reload');
+                            } else {
+                                $.messager.alert("错误", data.message, "error");
+                            }
+                         }, 'json').fail(function (jxhr, status, error) {
+                            alert('error: ' + status + ':' + error)
+                        });
+                    }
+                    
+                })
+            });
+        //刷新
+        $("#reload").on("click",
+            function () {
+                $('#tt').datagrid('reload');
+                $parent.messager.alert("提示", "刷新成功!", "info");
+            });
+});
+</script>
+{{end}}
+{{block css}}
+<style>
+    #tt_btn_info{
+            float: right;
+    font-size: 12px;
+    height: 27px;
+    line-height: 27px;
+    margin: 0 6px 0 0;
+    padding: 0;
+    }
+</style>
+{{end}}
+
+{{block body}}
+<body class="easyui-layout" >
+<table id="tt"></table>
+<div id="tt_btn">
+    <a href="javascript:void(0)"  id="add" class="easyui-linkbutton" iconCls="icon-add" plain="true">新增</a>
+    <a href="javascript:void(0)"  id="update" class="easyui-linkbutton" iconCls="icon-edit" plain="true">修改</a>
+    <a href="javascript:void(0)"  id="delete" class="easyui-linkbutton" iconCls="icon-remove" plain="true">删除</a>
+    <a href="javascript:void(0)"  id="reload" class="easyui-linkbutton" iconCls="icon-reload" plain="true">刷新</a>
+
+    <div id="tt_btn_info">
+        共有 <span>0</span> 条信息
+    </div>
+</div>
+<div id="dlg" class="easyui-dialog" style="width:300;height:225px;buttons="#dlg-buttons" data-options="closed:true,cache:false">
+<form id="ff" method="post">
+<table style="margin-top: 10px;margin-left: 42px">
+    <input type="hidden" name="id" >
+    <tr>
+        <td align="right" >菜单名称:</td>
+        <td >
+            <input class="easyui-textbox" type="text" name="catname" data-options="required:true" style="width: 140px"/>
+        </td>
+    </tr>
+    <tr>
+        <td align="right">父菜单:</td>
+        <td>
+            <input id = 'cc' name="parentid" style="width:140px;" />
+
+        </td>
+
+    </tr>
+    <tr>
+        <td align="right">菜单url:</td>
+        <td><input id = 'url' class="easyui-textbox" type="text" name="url"  /></td>
+    </tr>
+    <tr>
+        <td align="right">是否显示:</td>
+        <td>
+            <select id='cc2' class="easyui-combobox" name="isshow" style="width:140px;" data-options="panelHeight:'auto',">
+                <option value="1" selected="selected">显示</option>
+                <option value="0">不显示</option>
+            </select>
+        </td>
+
+    </tr>
+</table>
+</form>
+<div class="windowButton" id="dlg-buttons">
+     <a id="save" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-ok" href="javascript:void(0)" >保存</a>
+     <a id="cancel" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-cancel" href="javascript:void(0)" >取消</a>
+</div>
+</body>
+{{end}}

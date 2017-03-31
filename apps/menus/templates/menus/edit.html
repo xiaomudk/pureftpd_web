@@ -1,0 +1,122 @@
+
+{{block jsscript}}
+<script type="text/javascript">
+$(function(){
+    //获取所有的父菜单
+    $('#cc').combobox({
+        url:'/menus/get_parent',
+        valueField:'id',
+        textField:'catname',
+        //当数据加载成功，默认选择value为0的选项
+        onLoadSuccess: function() {
+            $('#cc').combobox('select','0');
+            getjson();
+        },
+
+        onSelect: function(record) {
+            alert(JSON.stringify(record));
+            //当选择父菜单为"无"的时候，地址这一栏不允许填写
+            setselect(record)
+
+        },
+    });
+
+    function setselect(record) {
+        if (record.id == 0 || (record.hasOwnProperty('parentid') && record.parentid == 0)){
+            $('#url').textbox('readonly');
+            $('#url').textbox('setText','父菜单是没有url的');
+//        }else if(record.hasOwnProperty('parentid') && record.parentid == 0){
+//            $('#url').textbox('readonly');
+//            $('#url').textbox('setText','父菜单是没有url的');
+        }else{
+            $('#url').textbox('readonly',false);
+            var url = $('#url').textbox('getValue');
+            $('#url').textbox('setText',url);
+
+        };
+
+    }
+
+//    $('#ff').form('load','/menus/getcat_json/1');
+    function getjson() {
+        $.getJSON('/menus/getcat_json/5', function (data) {
+            $('#ff').form('load', data);
+            //其他操作
+            $('#cc').combobox('select', data.parentid);
+            setselect(data)
+        });
+
+        $("#cancel").on("click", function () {
+            $("#win").window("close");
+        });
+    }
+
+    $("#save").on("click", function(){
+        $('#ff').form(
+            'submit',{
+                url:'/menus/save',
+                onSubmit: function(){
+    //                 点击提交时的验证
+                    return $(this).form('enableValidation').form('validate');
+            },
+            onLoadSuccess: function (data){
+                alert(data);
+            },
+            success:function(data){
+                //json解析成js对象
+                var data = jQuery.parseJSON(data);
+                if (data.returncode=="200"){
+//                    $parent.messager.alert("提示",data.message, "info");
+                    $("#win").window("close");
+                    $.messager.alert("提示",data.message, "info");
+                    $('#tt').datagrid('reload');
+                }else{
+                    $.messager.alert("错误",data.message, "error");
+
+                }
+            }
+        });
+    });
+})
+</script>
+{{end}}
+
+{{block body}}
+<form id="ff" method="post">
+<table style="margin-top: 10px;margin-left: 42px">
+    <tr>
+        <td align="right" >菜单名称:</td>
+        <td >
+            <input class="easyui-textbox" type="text" name="catname" data-options="required:true" style="width: 140px"/>
+        </td>
+    </tr>
+    <tr>
+        <td align="right">父菜单:</td>
+        <td>
+            <input id = 'cc' name="parentid" style="width:140px;" />
+
+        </td>
+
+    </tr>
+    <tr>
+        <td align="right">菜单url:</td>
+        <td><input id = 'url' class="easyui-textbox" type="text" name="url"  /></td>
+    </tr>
+    <tr>
+        <td align="right">是否显示:</td>
+        <td>
+            <select class="easyui-combobox" name="isshow" style="width:140px;" data-options="panelHeight:'auto'">
+                <option value="1">显示</option>
+                <option value="0">不显示</option>
+
+            </select>
+        </td>
+
+    </tr>
+</table>
+</form>
+<div class="windowButton" >
+     <a id="save" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-ok" href="javascript:void(0)" >保存</a>
+     <a id="cancel" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-cancel" href="javascript:void(0)" >取消</a>
+</div>
+{{end}}

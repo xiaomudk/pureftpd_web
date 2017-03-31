@@ -1,0 +1,46 @@
+{{block body}}
+<form id="ff" method="post">
+<table style="margin-top: 10px;margin-left: 42px">
+    <tr>
+        <td align="right" >菜单名称:</td>
+        <td >
+            <input class="easyui-textbox" type="text" name="catname" data-options="required:true" style="width: 140px"/>
+        </td>
+    </tr>
+    <tr>
+        <td align="right">父菜单:</td>
+        <td>
+            <input id = 'cc' name="parentid" style="width:140px;" />
+
+        </td>
+
+    </tr>
+    <tr>
+        <td align="right">菜单url:</td>
+        <td><input id = 'url' class="easyui-textbox" type="text" name="url"  /></td>
+    </tr>
+    <tr>
+        <td align="right">是否显示:</td>
+        <td>
+            <select class="easyui-combobox" name="isshow" style="width:140px;" data-options="panelHeight:'auto'">
+                <option value="1">显示</option>
+                <option value="0">不显示</option>
+
+            </select>
+        </td>
+
+    </tr>
+</table>
+</form>
+<div class="windowButton" >
+     <a id="save" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-ok" href="javascript:void(0)" >保存</a>
+     <a id="cancel" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-cancel" href="javascript:void(0)" >取消</a>
+</div>
+<!--<script>-->
+    <!--$(function(){-->
+        <!--$("#cancel").on("click", function () {-->
+            <!--$("#win").window("close");-->
+        <!--});-->
+    <!--})-->
+<!--</script>-->
+{{end}}

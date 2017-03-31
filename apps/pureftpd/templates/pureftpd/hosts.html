@@ -1,0 +1,288 @@
+{{extend "base.html"}}
+{{block javascript}}
+{{use "multiselect2side"}}
+<script type="text/javascript">
+    function getjson(id) {
+        $.getJSON('gethost_json/' + id, function (data) {
+            $('#ff').form('load', data);
+            //其他操作
+        });
+    }
+    function gethost_users(id) {
+		//先清空
+		$("#hostusersms2side__sx").empty();
+        $("#hostusersms2side__dx").empty();
+
+        $.getJSON('gethost_users/' + id, function (data) {
+                $.each(data, function(k,v){
+                    $("#multiselect").multiselect2side('addOption',{name:v.User,value:v.id,selected:v.selected});
+                });
+        });
+    }
+//$(function() {
+    $(window).load(function() {
+    $('#tt').datagrid({
+        height: 'auto',
+        url: 'gethostslist',
+        method: 'get',
+        idField: 'id',
+        singleSelect: false,
+        nowrap: true,
+        fitColumns: true,  //单元格自适应宽度
+        rownumbers: false,  //显示行号
+        fit: true,//自动大小
+        pagination: true,
+        //是否显示底部分页栏
+//        layout: ['first', 'links', 'last'],
+        showPageList: true,
+        remoteSort: false, //是否从服务器排序数据
+        showFooter: true,
+        pageSize: 10,
+        toolbar: '#tt_btn',
+        columns: [[{
+            field: 'ck',
+            checkbox: true
+        },
+            {
+                field: 'HostName',
+                title: '主机名',
+                width: 100,
+                sortable: true
+            },
+            {
+                field: 'HostIp',
+                title: '主机ip',
+                width: 100,
+                sortable: true
+            },
+            {
+                field: 'FtpPort',
+                title: 'ftp端口',
+                width: 100,
+                sortable: true
+            },
+            {
+                field: 'Comment',
+                title: '备注',
+                width: 100,
+            },
+        ]],
+
+        onLoadSuccess: function () {
+        },
+
+    });
+
+    var $parent = self.parent.$;
+    //根据选择的父菜单，设置url这一栏是否为只读
+    $('#multiselect').multiselect2side({
+        search: "待选区　搜索：",
+        selectedPosition: 'right',
+        moveOptions: false,
+        labelsx: '待选区  搜索:',
+        labeldx: '已选区',
+    });
+
+
+    $("#save").on("click", function () {
+        $('#ff').form(
+            'submit', {
+                url: 'hosts_save',
+                onSubmit: function () {
+//                 点击提交时的验证
+                    return $(this).form('enableValidation').form('validate');
+                },
+                onLoadSuccess: function (data) {
+//                    alert(data);
+                },
+                success: function (data) {
+                    //json解析成js对象
+                    var data = jQuery.parseJSON(data);
+                    if (data.returncode == "200") {
+//                    $parent.messager.alert("提示",data.message, "info");
+                        $("#dlg").dialog("close");
+                        $.messager.alert("提示", data.message, "info");
+                        $('#tt').datagrid('reload');
+                    } else {
+                        $.messager.alert("错误", data.message, "error");
+
+                    }
+                }
+            });
+    });
+        $("#save_user").on("click", function () {
+            $('#ff_user').form(
+                'submit', {
+                    url: 'save_hostuser',
+                    onSubmit: function () {
+//                 点击提交时的验证
+                    },
+                    onLoadSuccess: function (data) {
+//                    alert(data);
+                    },
+                    success: function (data) {
+                        //json解析成js对象
+                        var data = jQuery.parseJSON(data);
+                        if (data.returncode == "200") {
+//                    $parent.messager.alert("提示",data.message, "info");
+                            //$("#dlg_user").dialog("close");
+                            $.messager.alert("提示", data.message, "info");
+//                            $('#tt').datagrid('reload');
+                        } else {
+                            $.messager.alert("错误", data.message, "error");
+
+                        }
+                    }
+                });
+        });
+
+
+        $("#cancel").on("click", function () {
+            $("#dlg").dialog("close");
+        });
+        $("#cancel_user").on("click", function () {
+            $("#dlg_user").dialog("close");
+        });
+
+        //新增
+        $("#add").on("click",
+            function () {
+                $('#dlg').dialog('open').dialog('center').dialog('setTitle','新增主机');
+                $('#ff').form('clear');
+//                $('#ff').form('load','get_all_defalut');
+//                $('#ff').form('load',form_defalut);
+//                get_data('add',0);
+            });
+        //修改
+        $("#update").on("click",
+            function () {
+
+                var rows = $('#tt').datagrid('getSelections');
+                if (rows.length == 1) {
+                    row = rows[0];
+                    $('#dlg').dialog('open').dialog('center').dialog('setTitle','修改主机信息');
+                    getjson(row.id);
+                } else {
+                    $.messager.alert("提示", "必须选择一条且只能选择一条", "error")
+
+                }
+            });
+        //管理组成员
+        $("#update_user").on("click",
+            function () {
+
+                var rows = $('#tt').datagrid('getSelections');
+                if (rows.length == 1) {
+                    row = rows[0];
+                    $('#dlg_user').dialog('open').dialog('center').dialog('setTitle','管理"'+row.HostName +'"成员');
+                    $("#hostid").val(row.id);
+                    gethost_users(row.id);
+                } else {
+                    $.messager.alert("提示", "必须选择一条且只能选择一条", "error")
+
+                }
+            });
+        //删除
+        $("#delete").on("click",
+            function () {
+                var ids = [];
+                var rows = $('#tt').datagrid('getSelections');
+                if (rows.length < 1) {
+                    $.messager.alert("提示", "请选择你要删除的数据", "error")
+                    return
+                }
+                for (var i=0; i<rows.length; i++){
+                    ids.push(rows[i].id)
+                }
+                $.messager.confirm('提醒','你确实这删除这'+ids.length+'条记录吗?<br />主机组里的用户将被设置为无组用户', function (r) {
+                    if (r){
+                         $.post('deletehosts', {
+                             'id[]': ids
+                         }, function (data) {
+                            if (data.returncode == "200") {
+                                $.messager.alert("提示", data.message, "info");
+                                $('#tt').datagrid('reload');
+                            } else {
+                                $.messager.alert("错误", data.message, "error");
+                            }
+                         }, 'json').fail(function (jxhr, status, error) {
+                            alert('error: ' + status + ':' + error)
+                        });
+                    }
+
+                })
+            });
+        //刷新
+        $("#reload").on("click",
+            function () {
+                $('#tt').datagrid('reload');
+                $parent.messager.alert("提示", "刷新成功!", "info");
+            });
+});
+</script>
+{{end}}
+
+{{block body}}
+<body class="easyui-layout" >
+<table id="tt"></table>
+<div id="tt_btn">
+    <a href="javascript:void(0)"  id="add" class="easyui-linkbutton" iconCls="icon-add" plain="true">新增ftp主机</a>
+    <a href="javascript:void(0)"  id="update" class="easyui-linkbutton" iconCls="icon-edit" plain="true">修改ftp主机信息</a>
+    <a href="javascript:void(0)"  id="update_user" class="easyui-linkbutton" iconCls="icon-edit" plain="true">管理主机用户</a>
+    <a href="javascript:void(0)"  id="delete" class="easyui-linkbutton" iconCls="icon-remove" plain="true">删除</a>
+    <a href="javascript:void(0)"  id="reload" class="easyui-linkbutton" iconCls="icon-reload" plain="true">刷新</a>
+
+</div>
+<div id="dlg" class="easyui-dialog" style="width:451px;height:250px;buttons="#dlg-buttons" data-options="closed:true,cache:false">
+<form id="ff" method="post" style="height: auto;width:auto">
+<table style="margin-top: 10px;margin-left: 0px;width:auto">
+    <input type="hidden" name="id" >
+    <tr>
+        <td align="right" style="width: 100px">主机名:</td>
+        <td style="width: 350px">
+            <input class="easyui-textbox" type="text" name="HostName" data-options="required:true"  style="width: 200px"/>
+        </td>
+
+    </tr>
+    <tr>
+        <td align="right" style="width: 100px">主机IP:</td>
+        <td style="width: 350px">
+            <input class="easyui-textbox" type="text" name="HostIp" validType="ip"  style="width: 200px"/>
+        </td>
+
+    </tr>
+    <tr>
+        <td align="right" style="width: 100px">ftp端口:</td>
+        <td style="width: 350px">
+            <input class="easyui-textbox" type="text" name="FtpPort" validType="number"  style="width: 200px"/>
+        </td>
+
+    </tr>
+    <tr>
+        <td align="right">备注:</td>
+        <td>
+            <input class="easyui-textbox"  data-options="multiline:true" style="height:60px;width:200px" name="Comment" value="1000"/>
+        </td>
+    </tr>
+</table>
+</form>
+<div class="windowButton" id="dlg-buttons" style="right:161px">
+     <a id="save" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-ok" href="javascript:void(0)" >保存</a>
+     <a id="cancel" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-cancel" href="javascript:void(0)" >取消</a>
+</div>
+
+<div id="dlg_user" class="easyui-dialog" style="height:250px;width:512px;buttons="#user-buttons" data-options="closed:true,cache:false">
+<form id="ff_user" method="post" style="height: auto">
+            <input id="hostid" type="hidden" name="id" >
+            <select name="hostusers[]" id="multiselect" multiple='multiple' size='9'>
+
+            </select>
+
+</form>
+<div class="windowButton" id="user-buttons" style="right:191.5px">
+    <a id="save_user" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-ok" href="javascript:void(0)" >保存</a>
+    <a id="cancel_user" class="easyui-linkbutton my-dialog-button" plain="true" icon="icon-cancel" href="javascript:void(0)" >取消</a>
+</div>
+</body>
+{{end}}
+

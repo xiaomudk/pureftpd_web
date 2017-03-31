@@ -1,0 +1,142 @@
+{{extend "base.html"}}
+
+{{block title}}
+<title>用户管理</title>
+{{end}}
+
+{{block javascript}}
+<script src="{{=url_for_static('index.js')}}" type="text/javascript"></script>
+<script type="text/javascript">
+$(function() {
+    function getuser() {
+        $.getJSON('/login/get_name', function (data) {
+            $("span#login-name").text(data.username);
+        });
+    };
+    getuser();
+});
+</script>
+{{end}}
+
+{{block css}}
+<style>
+    .footer {
+        width: 100%;
+        text-align: center;
+        line-height: 20px;
+    }
+
+    .bg {
+        /*background: linear-gradient(to bottom, #eff5ff 0px, #e0ecff 100%) repeat-x scroll 0 0 rgba(0, 0, 0, 0);*/
+        /*background:#F3F3F3;*/
+        height: 80px;
+    }
+.ztree {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    /*background: none repeat scroll 0 0 #669999;*/
+    border-color: #0080c4 #f3f3f3;
+    border-image: none;
+    border-left: 1px solid #f3f3f3;
+    border-right: 1px solid #f3f3f3;
+    border-style: solid;
+    border-width: 0px 0px;
+    padding:0px;
+}
+
+.ztree li a.curSelectedNode{
+    /*background-color: #000000;*/
+    border: none;
+    height: 16px;
+    opacity: 0.8;
+    padding-top: 0;
+}
+
+.ztree li a.level0.cur{
+    /*background-color: #000000;*/
+    /*border: 1px solid #ffb951;*/
+    /*height: 16px;*/
+    /*opacity: 0.8;*/
+    /*padding-top: 0;*/
+    background:#f1f1f1 url({{=url_for_static('images/pro_down.png')}}) center right no-repeat !important;
+    /*background:#f1f1f1 url({{=url_for_static('images/pro_down.png')}}) center right no-repeat;*/
+}
+
+.ztree li a.level0 {
+    width:auto;
+    height: 47px;
+	line-height: 47px;
+	padding-left: 38px;
+	font-size: 14px;
+	color: #525252;
+	cursor: pointer;
+    display: block;
+	border-left: 1px solid #e1e1e1;
+	border-right: 1px solid #e1e1e1;
+	border-bottom: 1px solid #e1e1e1;
+	border-top: 1px solid #F1F1F1;
+	position: relative;
+	margin: 0px;
+	font-weight: bold;
+	background: #f1f1f1 url({{=url_for_static('images/pro_left.png')}}) center right no-repeat;
+}
+.ztree li a.level0 span {display: block;font-size:150%; font-weight: bold;}
+.ztree li a.level0 span.button {	float:right; margin-left: 10px; visibility: visible;display:none;}
+.ztree li span.button.switch.level0 {display:none;}
+.ztree li span {line-height:38px; margin:0px}
+
+.ztree li ul{ margin:0; padding:0;font-size:38px;}
+
+.ztree li a.level1 {
+    display:block;
+    height:38px;
+    line-height:38px;
+    padding-left:38px;
+    color:#777777;
+    background:#fff;
+    text-decoration:none;
+    border-bottom:1px solid #e1e1e1;
+}
+.ztree li a.level1 span {display: block;font-size:12px; line-height: 38px;}
+.ztree li a.level1 span.button {	float:right; margin-left: 10px; visibility: visible;display:none;}
+.ztree li span.button.switch.level1 {display:none;}
+.ztree li a:hover {text-decoration:none;}
+.ztree li .level1 a:hover {background-color: #ffe6b0;}
+
+</style>
+{{end}}
+
+{{block body}}
+<body class="easyui-layout">
+    <div data-options="region:'north'" style="overflow: hidden;height:80px;padding:5px; background:#F3F3F3">
+        <div class="bg">
+            <h1 style="text-align:center;margin: 0; padding: 20px;font-size:30px">ftp管理后台</h1>
+            <div class="loginInfo">
+                登录用户：<span id="login-name">admin </span>
+                <span style="margin-left: 30px"><a href="/logout" class="easyui-linkbutton" data-options="iconCls:'icon-redo'">退出</a></span>
+            </div>
+        </div>
+    </div>
+    <div  data-options="region:'west',iconCls:'icon-redo'," title="导航菜单" style="width:200px;padding1:1px;overflow:hidden">
+        <ul id="menuTree" class="ztree">
+        </ul>
+    </div>
+    <div data-options="region:'center',title:''" id="mainPanle" class="bg">
+		<div id="tabs" class="easyui-tabs" fit="true" border="false">
+            <div title="欢迎使用" style="padding: 20px; overflow: hidden;" id="home">
+                <h1>欢迎使用用户管理后台!</h1>
+            </div>
+        </div>
+	</div>
+    <div data-options="region:'south',border:true" class ="bg" style="height:50px">
+        <div class="footer bg">
+            作者:xixi<br />联系QQ：842543374
+        </div>
+    </div>
+
+<!-- 用于弹出框 -->
+<!--<div id="parent_win"></div>-->
+</body>
+{{end}}

@@ -1,0 +1,17 @@
+
+{{block body}}
+<div class="easyui-accordion" style="position: absolute; top: 27px; left: 0px; right: 0px; bottom: 0px;">
+    {{for k in sorted(menu_dict[0].keys(),key=int):}}
+    <div title="{{=menu_dict[0][k].catname}}" iconcls="icon-man" style="overflow: auto; padding: 10px">
+        {{if menu_dict.has_key(k):}}
+            <ul class="easyui-tree" data-options="animate: true,onClick: function(node){addTab(node.text,node.id)}">
+            {{for sk in sorted(menu_dict[k].keys(),key=int):}}
+                <li id="{{=menu_dict[k][sk].url}}"><span>{{=menu_dict[k][sk].catname}}</span></li>
+            {{pass}}
+            </ul>
+        {{pass}}
+    </div>
+    {{pass}}
+
+</div>
+{{end}}
